@@ -1,0 +1,40 @@
+reading file RC_2007-10
+read started 2016-01-19 21:26:50.093305
+read 150429 JSON objects, saved 17 JSON objects
+read finished 2016-01-19 21:26:56.792883
+
+reading file RC_2015-01
+read started 2016-01-19 21:27:06.008494
+read 53851542 JSON objects, saved 8382 JSON objects
+read finished 2016-01-19 22:11:26.911993
+
+reading file RC_2015-10
+read started 2016-01-19 22:18:22.990281
+read 59494045 JSON objects, saved 10293 JSON objects
+read finished 2016-01-19 23:04:56.332543
+
+reading file RC_2015-11
+read started 2016-01-19 23:06:08.560360
+read 57117500 JSON objects, saved 9785 JSON objects
+read finished 2016-01-19 23:51:28.069398
+
+reading file RC_2015-01_scraped
+read started 2016-01-20 10:07:37.717002
+read 8382 JSON objects, saved 5672 JSON objects
+read finished 2016-01-20 10:07:38.808155
+
+reading file RC_2007-10_scraped
+read started 2016-01-20 10:08:48.690673
+read 17 JSON objects, saved 12 JSON objects
+read finished 2016-01-20 10:08:48.702900
+
+reading file RC_2015-10_scraped
+read started 2016-01-20 10:09:19.401331
+read 10293 JSON objects, saved 6989 JSON objects
+read finished 2016-01-20 10:09:21.132457
+
+reading file RC_2015-11_scraped
+read started 2016-01-20 10:09:24.339798
+read 9785 JSON objects, saved 6504 JSON objects
+read finished 2016-01-20 10:09:26.529130
+
