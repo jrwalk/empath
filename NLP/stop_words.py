@@ -35,6 +35,7 @@ def stop_words():
 		'meds','medication',
 		'doctor','psychiatrist',
 		'weeks',
-		'amp']
+		'amp','gt','lt',
+		'tried']
 	stops = stops+expansion
 	return stops

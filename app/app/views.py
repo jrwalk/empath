@@ -36,7 +36,11 @@ def output():
 		else:
 			drugname = "%s (%s)" % (drug.lower(),gen.lower())
 	else:	# drug not in dict
-		return render_template('error.html')
+		drugs = []
+		with open('/home/jrwalk/python/empath/data/drugs/antidepressants.txt','r') as readfile:
+			for line in readfile:
+				drugs.append(line.strip())
+		return render_template('error.html',drugs=drugs)
 
 	words = gw.getter(_drug_dict[drug.upper()].lower())
 	count = words[0]
@@ -47,6 +51,7 @@ def output():
 	total_words = fd.N()
 	unique_words = fd.B()
 	scores = scores[:20]
+	gw.visualizer(scores,drugname)
 	top_words = []
 	for row in scores.iterrows():
 		word = row[1].word

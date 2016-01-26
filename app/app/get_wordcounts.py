@@ -1,9 +1,13 @@
-"""getter method to restore data from pickled wordcount data
+"""getter method to restore data from pickled wordcount data, plus 
+visualizer.
 """
 import glob
 import pickle
 import re
 import pandas
+import wordcloud
+import matplotlib.pyplot as plt
+plt.ioff()
 
 
 def getter(drug):
@@ -29,8 +33,6 @@ def getter(drug):
 	bestfile = ''
 	bestcount = 0
 	for file in files:
-		print bestfile
-		print file
 		num = int(re.findall('[0-9]+',file)[0])
 		if num > bestcount:
 			bestfile = file
@@ -43,8 +45,24 @@ def getter(drug):
 		"tfidf_%s_%s.pkl" % (drug,bestcount))	# will match wordcount file
 	with open(tfidffile,'r') as readfile:
 		tfidf_scores = pickle.load(readfile)
-		
+
 	tfidf_scores = pandas.DataFrame(tfidf_scores.items(),
 		columns=['word','score'])
 	tfidf_scores.sort(columns='score',ascending=False,inplace=True)
 	return (count,limit,freq,tfidf_scores)
+
+
+def visualizer(tfidf_scores,drugname):
+	"""Produces visualization of wordcount data, using output from getter().
+
+	ARGS:
+		tfidf_scores: pandas.DataFrame.
+			DataFrame of words, tf-idf scores from getter() method.
+		drugname: string.
+			String generated in views.py for display.
+	"""
+	scores_lim = tfidf_scores.head(20)	# cap at top 20 words
+	scores_list = [tuple(row) for row in scores_lim.values]
+	cloud = wordcloud.WordCloud()
+	cloud.fit_words(scores_list)
+	cloud.to_image().save('app/static/images/wordcloud_%s.png' % drugname)

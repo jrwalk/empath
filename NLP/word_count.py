@@ -74,15 +74,16 @@ def tokenize(text,drug=None,pos_filter=True):
 	
 	# filter on stop words
 	stops = sw.stop_words()
-	if drug is not None and drug.upper() != 'ANTIDEPRESSANT':
-		stops.append(drug.lower())
-		if _drug_dict[drug.upper()] != drug.upper():
-			stops.append(_drug_dict[drug.upper()].lower())
-		if drug.upper() in _gen_dict.keys():
-			for bd in _gen_dict[drug.upper()]:
-				stops.append(bd.lower())
-	if drug is not None and drug.upper() == 'ANTIDEPRESSANT':
-		stops = stops+['antidepressant','antidepressants']
+	if drug is not None:
+		if drug.upper() != 'ANTIDEPRESSANT':
+			stops.append(drug.lower())
+			if _drug_dict[drug.upper()] != drug.upper():
+				stops.append(_drug_dict[drug.upper()].lower())
+			if drug.upper() in _gen_dict.keys():
+				for bd in _gen_dict[drug.upper()]:
+					stops.append(bd.lower())
+		else:
+			stops = stops+['antidepressant','antidepressants']
 	stops = set(stops)
 	tokens = [word for word in tokens if word not in stops]
 

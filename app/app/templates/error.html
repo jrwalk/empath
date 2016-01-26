@@ -62,7 +62,11 @@
     <div class="starter-template">
         <h2>Drug Not Found</h2>
         <p>The input drug is not in our database of antidepressants.
-          FDA-monitored drugs in the US:</p>
+          FDA-monitored drugs in the US:
+          {% for drug in drugs %}
+          <p>{{ drug }}</p>
+          {% endfor %}
+          </p>
     </div>
 
     <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
