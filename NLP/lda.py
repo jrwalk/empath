@@ -62,3 +62,32 @@ def build_corpus(drug=None,limit=None):
 	corpus =  [dictionary.doc2bow(text) for text 
 		in stream_tokens(drug=drug,limit=limit)]
 	return (corpus,dictionary)
+
+
+def build_model(corpus,dictionary,num_topics=5,passes=20):
+	"""Wrapper for gensim.models methods, particularly 
+	gensim.models.ldamulticore.
+
+	ARGS:
+		corpus: list.
+			corpus of vectorized texts produced by build_corpus.
+		dictionary: gensim.corpora.Dictionary object.
+			mapping dictionary for vectorized texts produced by build_corpus.
+
+	KWARGS:
+		num_topics: int.
+			number of topic clusters passed to LDA modeler.  Default 5.
+		passes: int.
+			number of processing passes, passed to LDA modeler.  Default 20.
+
+	RETURNS:
+		model: gensim.models.ldamulticore.LdaMulticore object.
+			vectorized LDA model processor.
+	"""
+	model = gensim.models.ldamulticore.LdaMulticore(
+		corpus=corpus,
+		num_topics=num_topics,
+		id2word=dictionary,
+		workers=4,
+		passes=passes)
+	return model

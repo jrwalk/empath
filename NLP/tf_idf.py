@@ -33,14 +33,14 @@ def tf_idf(freqdist,corpus):
 	return wordscores
 
 
-def calc_tf_idfs():
+def calc_tf_idfs(count):
 	"""loops through archived wordlists, loads each, calculates TF-IDF score 
 	for words contained, writes to dict and saves in pickle.
 	"""
 	corpus = TextCollection(nltk.corpus.webtext)
 
 	filepath = '/home/jrwalk/python/empath/data/reddit/pickles/'
-	files = glob.glob(filepath+'wordcount*.pkl')
+	files = glob.glob(filepath+'wordcount*%s.pkl' % count)
 	filecount = len(files)
 	for i,picklefile in enumerate(files):
 		print "%i/%i processing %s" % (i+1,filecount,picklefile)
