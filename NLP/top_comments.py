@@ -81,10 +81,10 @@ def top_comments_simple(drug=None,n=5):
 
 		#if drug is not None:
 		#	bodymod = re.compile(drug,re.IGNORECASE)
-		#	body = bodymod.sub("**%s*" % drug,body)
+		#	body = bodymod.sub("%s" % drug,body)
 		#if gen is not None:
 		#	bodymod = re.compile(gen,re.IGNORECASE)
-		#	body = bodymod.sub("**%s**" % gen,body)
+		#	body = bodymod.sub("%s" % gen,body)
 
 		yield (author,body,created_utc,score,subreddit)
 

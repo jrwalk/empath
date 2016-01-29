@@ -1,6 +1,7 @@
 """wrapper around nltk.corpus.stopwords, expanding on relevant stopwords.
 """
 from nltk.corpus import stopwords
+import string
 
 def stop_words():
 	"""returns expanded list of stopwords.
@@ -13,6 +14,7 @@ def stop_words():
 	expansion = ['com',
 		'http',
 		'https',
+		'www',
 		'm',
 		've',
 		'also',
@@ -36,6 +38,11 @@ def stop_words():
 		'doctor','psychiatrist',
 		'weeks',
 		'amp','gt','lt',
-		'tried']
+		'tried',
+		'ago',
+		'started']
+	for s in string.punctuation:
+		expansion.append(s)
+
 	stops = stops+expansion
 	return stops
