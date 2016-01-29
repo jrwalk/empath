@@ -8,10 +8,11 @@ import nltk
 from corenlp_xml.document import Document
 import os
 import subprocess
-import itertools
 import pymysql as pms
 import numpy as np
 from stop_words import stop_words
+import pandas
+from word_count import tokenize
 
 import build_drug_dict as bdd
 _drug_dict = bdd.build_drug_dict(
@@ -133,36 +134,71 @@ def map_subtrees(trees,drugs):
 	mentions = []
 	precedence = []
 	lastdrug = 'preamble'
-	for i,tree in enumerate(trees):
-		precedence = 0
-		sent = sentiments[i]
-		mentions.append([d for d in drugs if d in tree.leaves])
+	for tree in trees:
+		#precedence = 0
+		mentions.append([d for d in drugs if d in tree.leaves()])
 		subtrees = parse_tree(tree,drugs)
 		for sub in subtrees:
 			subtext = sub.leaves()
 			drug = [d for d in drugs if d in subtext]
-			precedence.append(drug)
 			if len(drug) > 0:
 				drug = drug[0]
 				lastdrug = drug
 			else:
 				drug = lastdrug
+			precedence.append(drug)
 			if drug not in texts.keys():
 				texts[drug] = [subtext]
-				if lastdrug != 'preamble':
-					precedence += 1
+				#if lastdrug != 'preamble':
+				#	precedence += 1
 			else:
 				texts[drug].append(subtext)
 	return (texts,mentions,precedence)
 
 
-def build_chunks(drug,limit=None):
+def train_classifier():
+	"""Constructs nltk Naive Bayes classifier using labeled medical comments 
+	(from Nicole Strang's dataset).
+
+	RETURNS:
+		nbc: nltk.classify.NaiveBayesClassifier object.
+			Naive Bayes classifier trained on Nicole Strang's labeled patient 
+			comments from previous Insight project.  Similar usage (comments 
+			on drug side effects) but disjoint from antidepressant data.
+	"""
+	df = pandas.read_csv(
+		'/home/jrwalk/python/empath/data/training/Comments.txt',index_col=0)
+	df['Comments'].replace('',np.nan,inplace=True)
+	df.dropna(subset=['Comments'],inplace=True)
+	df = df.drop_duplicates(subset=['Drug','Comments'])
+	df = df[df.Rating != 3]
+	df['Value'] = ['pos' if x>3 else 'neg' for x in df['Rating']]
+
+	# so now we have a DataFrame of the training data, including user rating, 
+	# side effects, comments, and patient metadata.  Realistically we only need 
+	# the rating and comments.
+	pos_texts = df['Comments'][df['Value'] == 'pos'].tolist()
+	neg_texts = df['Comments'][df['Value'] == 'neg'].tolist()
+
+	pos_data = [(dict([(word,True) for word in tokenize(com,None,False)]),'pos') 
+		for com in pos_texts]
+	neg_data = [(dict([(word,True) for word in tokenize(com,None,False)]),'neg') 
+		for com in neg_texts]
+	trainingdata = pos_data + neg_data
+
+	classifier = nltk.classify.NaiveBayesClassifier.train(trainingdata)
+	return classifier
+
+
+def build_chunks(drug,classifier,limit=None):
 	"""Pulls comment data from SQL table, constructs trees for each, chunks by 
 	drug mention, writes to Chunks SQL table organized by drug.
 
 	ARGS:
 		drug: string.
 			drug name.
+		classifier: nltk.classify.NaiveBayesClassifier object.
+			trained Naive Bayes classifier.
 
 	KWARGS:
 		limit: int or None.
@@ -198,11 +234,12 @@ def build_chunks(drug,limit=None):
 	for gen in _generics:
 		query += (",m.%s" % gen.lower())
 	query += " FROM Comments c JOIN Subreddits s on c.subreddit=s.subreddit "
-	query += "JOIN Mentions m on c.id=m.id WHERE m.count=1 OR m.count=2 "
-	query += ("AND m.%s=True" % drug.lower())
+	query += "JOIN Mentions m on c.id=m.id WHERE (m.count=1 OR m.count=2) "
+	query += ("AND m.%s=True AND c.chunked=False" % drug.lower())
 	if limit is not None:
 		query += (" LIMIT %s" % limit)
 	cur.execute(query)
+	conn.close()
 
 	for row in cur:
 		post_id = row[0]
@@ -221,7 +258,7 @@ def build_chunks(drug,limit=None):
 		trees,sentiments = build_tree(body,drugs)
 		subtexts,mentions,precedence = map_subtrees(trees,drugs)
 
-		for drug in set(precedence):
+		for i,drug in enumerate(set(precedence)):
 			drugtext = []
 			for subtext in subtexts[drug]:
 				for word in subtext:
@@ -229,18 +266,103 @@ def build_chunks(drug,limit=None):
 			drugtext = [word for word in drugtext 
 				if word not in set(stop_words())]
 			sents = []
-			for i,men in enumerate(mentions):
+			for j,men in enumerate(mentions):
 				if len(men) == 0:
 					men = ['preamble']
 				if drug in men:
-					sents.append(sentiments[i])
+					sents.append(sentiments[j])
 
-			
+			nbsent = classifier.prob_classify(dict([(word,True) for word in 
+				drugtext])).prob('pos')	# probability positive
+
+			data = (post_id,i,drug,drugtext,sents,nbsent)
+			yield data
 
 
+def write_chunks(drug,classifier,limit=None):
+	"""gets generator of chunked data from build_chunks, writes to SQL Chunks 
+	db, updates Comments with chunked flag.  Args, Kwargs passed to 
+	build_chunks.
 
+	ARGS:
+		drug: string.
+			drug name.
+		classifier: nltk.classify.NaiveBayesClassifier object.
+			trained Naive Bayes classifier.
 
+	KWARGS:
+		limit: int or None.
+			optional cap on number of comments streamed through processor.
 
+	RETURNS:
+		counter: int.
+			count of updated rows.
 
+	RAISES:
+		ValueError:
+			if invalid drug is input.
+	"""
+	try:
+		chunks = build_chunks(drug,classifier,limit=limit)
+	except ValueError:
+		raise ValueError("invalid drug name.")
 
+	conn = pms.connect(host='localhost',
+		user='root',
+		passwd='',
+		db='empath',
+		charset='utf8',
+		init_command='SET NAMES UTF8')
+	cur = conn.cursor()
+
+	counter = 0
+	for chunk in chunks:
+		counter += 1
+		post_id = chunk[0]
+		i = chunk[1]
+		drug = chunk[2]
+		drug_text = chunk[3]
+		sents = chunk[4]
+		nbsent = chunk[5]
+
+		drug_text_text = ""
+		for dt in drug_text:
+			drug_text_text += dt+' '
+		sents_text = ""
+		for s in sents:
+			sents_text += s+' '
+
+		cur.execute("UPDATE Comments SET chunked=True WHERE id=%s",(post_id))
+		cur.execute("INSERT INTO Chunks "
+			"(id,"
+			"drug,"
+			"precedence,"
+			"drug_text,"
+			"sents,"
+			"nbsent) " 
+			"VALUES (%s,%s,%s,%s,%s,%s)",
+			(post_id,
+				drug,
+				i,
+				drug_text_text,
+				sents_text,
+				nbsent)
+			)
+
+	conn.commit()
 	conn.close()
+	return counter
+
+		
+def write_drugs(limit=None):
+	"""loop through drugs, try to find new chunks and process.
+
+	KWARGS:
+		limit: int or None.
+			cap on any single-drug comment pull.
+	"""
+	classifier = train_classifier()
+	drugs = [d.lower() for d in _generics]
+	for i,d in enumerate(drugs):
+		count = write_chunks(d,classifier,limit=limit)
+		print("%i/%i Processed %i chunks for %s" % (i+1,len(drugs),count,d))

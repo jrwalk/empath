@@ -16,6 +16,7 @@ _generics = bdd.generics(_drug_dict)
 
 import get_wordcounts as gw
 import top_comments as tc
+import sentiments as s
 
 @app.route('/index')
 def index():
@@ -61,10 +62,15 @@ def output():
 
 	words = (count,total_words,unique_words,top_words)
 
+	nn_sent = s.corenlp_sentiment(gen.lower())
+	nba_sent = s.nba_sentiment(gen.lower())
+
 	comments = tc.top_comments(drug.lower())
 	comments = [c for c in comments]	# list of tuples, rather than generator
 
 	return render_template('output.html',
 		drugname=drugname,
 		words=words,
-		comments=comments)
+		comments=comments,
+		nn_sent=nn_sent,
+		nba_sent=nba_sent)
