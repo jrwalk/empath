@@ -9,6 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
     <link rel="icon" href="../../favicon.ico">
+    <script type="text/javascript" src="d3/d3.v3.js"></script>
 
     <title>Empath - antidepressant sentiment and recommender</title>
 
@@ -89,10 +90,11 @@
 
       <p>Results for <b>{{ drugname }}</b></p>
       <hr>
-      <p>Naive Bayes Sentiment Analysis Result: {{ nba_sent }}% positive</p>
+      <p>Naive Bayes Sentiment Analysis Result: {{ nba_sent[0] }} positive
+      (compared to {{ nba_sent[1] }} overall sentiment)</p>
       <p>Neural Net Tree Sentiment Analysis Result: </p>
-      {% for term in nn_sent[0].keys() %}
-      <p>{{ term }}: {{ nn_sent[0][term]/nn_sent[1] }}</p>
+      {% for term in nn_sent[0][0].keys() %}
+      <p>{{ term }}: {{ nn_sent[0][0][term]/nn_sent[0][1] }}</p>
       {% endfor %}
       <hr>
       <p>Top reddit posts:</p>
@@ -147,6 +149,10 @@
       <script src="static/js/bootstrap.min.js"></script>
 
       <hr>
+
+      <script type="text/javascript">
+            // Your beautiful D3 code will go here
+      </script>
 
      </div><!-- /.container -->
 

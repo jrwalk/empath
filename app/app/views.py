@@ -19,9 +19,6 @@ import top_comments as tc
 import sentiments as s
 
 @app.route('/index')
-def index():
-	return 'placeholder'
-
 @app.route('/')
 def input():
 	return render_template('input.html')
@@ -63,7 +60,9 @@ def output():
 	words = (count,total_words,unique_words,top_words)
 
 	nn_sent = s.corenlp_sentiment(gen.lower())
+	nn_sent_all = s.corenlp_sentiment(None)
 	nba_sent = s.nba_sentiment(gen.lower())
+	nba_sent_all = s.nba_sentiment(None)
 
 	comments = tc.top_comments(drug.lower())
 	comments = [c for c in comments]	# list of tuples, rather than generator
@@ -72,5 +71,5 @@ def output():
 		drugname=drugname,
 		words=words,
 		comments=comments,
-		nn_sent=nn_sent,
-		nba_sent=nba_sent)
+		nn_sent=(nn_sent,nn_sent_all),
+		nba_sent=(nba_sent,nba_sent_all))
