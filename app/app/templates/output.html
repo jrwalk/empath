@@ -92,7 +92,7 @@
       <p>Naive Bayes Sentiment Analysis Result: {{ nba_sent }}% positive</p>
       <p>Neural Net Tree Sentiment Analysis Result: </p>
       {% for term in nn_sent[0].keys() %}
-      <p>{{ term }}: {{ nn_sent[0][term] }}/{{ nn_sent[1] }}</p>
+      <p>{{ term }}: {{ nn_sent[0][term]/nn_sent[1] }}</p>
       {% endfor %}
       <hr>
       <p>Top reddit posts:</p>

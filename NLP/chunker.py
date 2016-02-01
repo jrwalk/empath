@@ -13,6 +13,7 @@ import numpy as np
 from stop_words import stop_words
 import pandas
 from word_count import tokenize
+import sys
 
 import build_drug_dict as bdd
 _drug_dict = bdd.build_drug_dict(
@@ -83,12 +84,13 @@ def build_tree(text,drugs):
 			each sentence.
 	"""
 	with open('input.txt','w') as writefile:
-		writefile.write(text)
+		writefile.write(text.encode('utf8'))
 
-	subprocess.call("/home/jrwalk/corenlp/corenlp.sh -annotators "
-		"tokenize,ssplit,parse,pos,sentiment "
-		"-file input.txt -outputFormat xml",
-		shell=True)
+	with open('corenlp.log','w') as logfile:
+		subprocess.call("/home/jrwalk/corenlp/corenlp.sh -annotators "
+			"tokenize,ssplit,parse,pos,sentiment "
+			"-file input.txt -outputFormat xml",
+			shell=True,stdout=logfile)
 
 	xmlstring = ''
 	with open('input.txt.xml','r') as readfile:
@@ -97,6 +99,7 @@ def build_tree(text,drugs):
 
 	os.remove('input.txt')
 	os.remove('input.txt.xml')
+	os.remove('corenlp.log')
 
 	doc = Document(xmlstring)
 	sentences = doc.sentences
@@ -252,7 +255,7 @@ def build_chunks(drug,classifier,limit=None):
 		# clean body text
 		body = body.lower()
 		for drug in drugs:
-			for remap in _gen_dict[drug.upper()]:
+			for remap in _gen_dict.get(drug.upper(),[drug.upper()]):
 				body = body.replace(remap.lower(),drug.lower())
 
 		trees,sentiments = build_tree(body,drugs)
@@ -325,6 +328,8 @@ def write_chunks(drug,classifier,limit=None):
 		sents = chunk[4]
 		nbsent = chunk[5]
 
+		print post_id
+
 		drug_text_text = ""
 		for dt in drug_text:
 			drug_text_text += dt+' '
@@ -332,22 +337,26 @@ def write_chunks(drug,classifier,limit=None):
 		for s in sents:
 			sents_text += s+' '
 
-		cur.execute("UPDATE Comments SET chunked=True WHERE id=%s",(post_id))
-		cur.execute("INSERT INTO Chunks "
-			"(id,"
-			"drug,"
-			"precedence,"
-			"drug_text,"
-			"sents,"
-			"nbsent) " 
-			"VALUES (%s,%s,%s,%s,%s,%s)",
-			(post_id,
-				drug,
-				i,
-				drug_text_text,
-				sents_text,
-				nbsent)
-			)
+		try:
+			cur.execute("INSERT INTO Chunks "
+				"(id,"
+				"drug,"
+				"precedence,"
+				"drug_text,"
+				"sents,"
+				"nbsent) " 
+				"VALUES (%s,%s,%s,%s,%s,%s)",
+				(post_id,
+					drug,
+					i,
+					drug_text_text,
+					sents_text,
+					nbsent)
+				)
+			cur.execute(
+				"UPDATE Comments SET chunked=True WHERE id=%s",(post_id))
+		except:
+			print("could not insert to table")
 
 	conn.commit()
 	conn.close()
