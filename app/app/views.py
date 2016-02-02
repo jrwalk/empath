@@ -1,5 +1,6 @@
 from flask import render_template, request
 from app import app
+import json
 
 import sys
 sys.path.append('/home/jrwalk/python/empath/')
@@ -14,12 +15,16 @@ _drug_dict = bdd.build_drug_dict(
 	'/home/jrwalk/python/empath/data/drugs/antidepressants.txt')
 _generics = bdd.generics(_drug_dict)
 
+from chunker import train_classifier
+cl = train_classifier()
+
 import get_wordcounts as gw
 import top_comments as tc
 import sentiments as s
 
 @app.route('/index')
 @app.route('/')
+@app.route('/#')
 def input():
 	return render_template('input.html')
 
@@ -48,14 +53,12 @@ def output():
 
 	total_words = fd.N()
 	unique_words = fd.B()
-	scores = scores[:20]
-	gw.visualizer(scores,drugname)
 	top_words = []
-	for row in scores.iterrows():
+	for row in scores.head(20).iterrows():
 		word = row[1].word
 		score = row[1].score
-		count = fd[word]
-		top_words.append((word,count,score))
+		wordcount = fd[word]
+		top_words.append((word,wordcount,score))
 
 	words = (count,total_words,unique_words,top_words)
 
@@ -67,9 +70,68 @@ def output():
 	comments = tc.top_comments(drug.lower())
 	comments = [c for c in comments]	# list of tuples, rather than generator
 
+	rip_to_json(fd,scores,40)
+
 	return render_template('output.html',
 		drugname=drugname,
 		words=words,
 		comments=comments,
 		nn_sent=(nn_sent,nn_sent_all),
 		nba_sent=(nba_sent,nba_sent_all))
+
+
+def rip_to_json(freqdist,scores,limit=20):
+	"""takes top TF-IDF scoring words, generates JSON categorized by 
+	positive/negative/neutral word scoring from Naive Bayes classifier, 
+	to be read by d3 utilization in output.html to display word-count bubble.
+
+	ARGS:
+		freqdist: nltk.probability.FreqDist object.
+			contains word frequencies.
+		scores: pandas.DataFrame object.
+			contains TF-IDF scores of words in freqdist.
+
+	KWARGS:
+		limit: int.
+			cap on how many words to parse into bubbler.
+	"""
+	# initialize structure
+	data = {'name':'wordscores',
+		'children':[
+			{'name':'positive',
+			'children':[]},
+			{'name':'neutral',
+			'children':[]},
+			{'name':'negative',
+			'children':[]}
+		]}
+
+	scores = scores.head(limit)
+	for row in scores.iterrows():
+		word = row[1].word
+		score = row[1].score
+		freq = float(freqdist[word])/freqdist.N()
+		count = freqdist[word]
+
+		pscore = cl.prob_classify({word:True}).prob('pos')
+		if pscore>=0.6:
+			data['children'][0]['children'].append({'name':word,
+				'size':count,
+				'score':score,
+				'freq':freq,
+				'pscore':pscore})
+		elif pscore>=0.4 and pscore<0.6:
+			data['children'][1]['children'].append({'name':word,
+				'size':count,
+				'score':score,
+				'freq':freq,
+				'pscore':pscore})
+		else:
+			data['children'][2]['children'].append({'name':word,
+				'size':count,
+				'score':score,
+				'freq':freq,
+				'pscore':pscore})
+
+	with open('app/static/data/scores.json','w') as writefile:
+		json.dump(data,writefile)

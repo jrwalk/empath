@@ -144,7 +144,7 @@ def top_comments(drug=None,n=5):
 	conn.close()
 
 	data['normscore'] = data.score/data.subscribers**.33
-	data.sort(columns='normscore',ascending=False,inplace=True)
+	data.sort_values(by='normscore',ascending=False,inplace=True)
 	data = data[:n]
 
 	for row in data.iterrows():

@@ -48,7 +48,7 @@ def getter(drug):
 
 	tfidf_scores = pandas.DataFrame(tfidf_scores.items(),
 		columns=['word','score'])
-	tfidf_scores.sort(columns='score',ascending=False,inplace=True)
+	tfidf_scores.sort_values(by='score',ascending=False,inplace=True)
 	return (count,limit,freq,tfidf_scores)
 
 
