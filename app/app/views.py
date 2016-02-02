@@ -24,7 +24,6 @@ import sentiments as s
 
 @app.route('/index')
 @app.route('/')
-@app.route('/#')
 def input():
 	return render_template('input.html')
 
