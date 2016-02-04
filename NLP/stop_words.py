@@ -40,7 +40,9 @@ def stop_words():
 		'amp','gt','lt',
 		'tried',
 		'ago',
-		'started']
+		'started',
+		'pretty',
+		'levels']
 	for s in string.punctuation:
 		expansion.append(s)
 

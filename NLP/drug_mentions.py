@@ -86,3 +86,4 @@ def texts(drug=None,limit=None):
 def chunks(drug,limit=None):
 	"""Generator of chunks for selected drug.
 	"""
+	pass
