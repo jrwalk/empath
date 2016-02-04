@@ -1,6 +1,7 @@
 from flask import render_template, request
 from app import app
 import json
+import numpy as np
 
 import sys
 sys.path.append('/home/jrwalk/python/empath/')
@@ -44,22 +45,8 @@ def output():
 				drugs.append(line.strip())
 		return render_template('error.html',drugs=drugs)
 
-	words = gw.getter(_drug_dict[drug.upper()].lower())
-	count = words[0]
-	#posts = words[1]	# scrape limit
-	fd = words[2]		# nltk.probability.FreqDist
-	scores = words[3]	# pandas.DataFrame
-
-	total_words = fd.N()
-	unique_words = fd.B()
-	top_words = []
-	for row in scores.head(20).iterrows():
-		word = row[1].word
-		score = row[1].score
-		wordcount = fd[word]
-		top_words.append((word,wordcount,score))
-
-	words = (count,total_words,unique_words,top_words)
+	fd,scores,words = get_word_scores(drug)
+	rip_to_json(fd,scores,40)
 
 	nn_sent = s.corenlp_sentiment(gen.lower())
 	nn_sent_all = s.corenlp_sentiment(None)
@@ -69,14 +56,55 @@ def output():
 	comments = tc.top_comments(drug.lower())
 	comments = [c for c in comments]	# list of tuples, rather than generator
 
-	rip_to_json(fd,scores,40)
+	strs = parse_sentiment(nn_sent,nn_sent_all)
 
 	return render_template('output.html',
 		drugname=drugname,
 		words=words,
 		comments=comments,
 		nn_sent=(nn_sent,nn_sent_all),
-		nba_sent=(nba_sent,nba_sent_all))
+		nba_sent=(nba_sent,nba_sent_all),
+		strs=strs)
+
+
+def parse_sentiment(nn_sent,nn_sent_all):
+	"""constructs strings of positivity/negativity ratings compared to average 
+	from neural-net based analyzer.
+
+	ARGS:
+		nn_sent: tuple.
+			tuple of (collections.Counter,total) of sentiment scores for drug.
+		nn_sent_all: tuple.
+			Similarly structured tuple, of all drug posts.
+	"""
+	pos_count = nn_sent[0]['Positive'] + nn_sent[0]['Verypositive']
+	pos_count_all = nn_sent_all[0]['Positive'] + nn_sent_all[0]['Verypositive']
+	pos_percent = float(pos_count)/nn_sent[1]
+	pos_percent_all = float(pos_count_all)/nn_sent_all[1]
+
+	neg_count = nn_sent[0]['Negative'] + nn_sent[0]['Verynegative']
+	neg_count_all = nn_sent_all[0]['Negative'] + nn_sent_all[0]['Verynegative']
+	neg_percent = float(neg_count)/nn_sent[1]
+	neg_percent_all = float(neg_count_all)/nn_sent_all[1]
+
+	pos_scale = np.abs(1. - pos_percent/pos_percent_all) * 100.
+	pos_scale = ("%.2f" % pos_scale)
+	neg_scale = np.abs(1. - neg_percent/neg_percent_all) * 100.
+	neg_scale = ("%.2f" % neg_scale)
+	if pos_percent > pos_percent_all:
+		pos_str = "more positive"
+	else:
+		pos_str = "less positive"
+
+	if neg_percent > neg_percent_all:
+		neg_str = "more negative"
+	else:
+		neg_str = "less negative"
+
+	pos = (pos_scale,pos_str)
+	neg = (neg_scale,neg_str)
+	return (pos,neg)
+	
 
 
 def rip_to_json(freqdist,scores,limit=20):
@@ -134,3 +162,49 @@ def rip_to_json(freqdist,scores,limit=20):
 
 	with open('app/static/data/scores.json','w') as writefile:
 		json.dump(data,writefile)
+
+
+def get_word_scores(drug,limit=20):
+	"""processes output of get_wordcounts.getter().
+
+	ARGS:
+		drug: string.
+			name of drug.
+
+	KWARGS:
+		limit: int.
+			cap on number of words to return.
+
+	RETURNS:
+		fd: nltk.probability.FreqDist object.
+			Frequency distribution for words in corpus.
+		scores: pandas.DataFrame object.
+			sorted DataFrame of TF-IDF scores by word
+		words: tuple.
+			tuple of:
+				count: int.
+					total number of posts processed.
+				total_words: int.
+					total number of words in posts.
+				unique_words: int.
+					number of unique words in posts.
+				top_words: list.
+					list of (word,wordcount,TF-IDF score) for top `limit` words.
+	"""
+	words = gw.getter(_drug_dict[drug.upper()].lower())
+	count = words[0]
+	#posts = words[1]	# scrape limit
+	fd = words[2]		# nltk.probability.FreqDist
+	scores = words[3]	# pandas.DataFrame
+
+	total_words = fd.N()
+	unique_words = fd.B()
+	top_words = []
+	for row in scores.head(limit).iterrows():
+		word = row[1].word
+		score = row[1].score
+		wordcount = fd[word]
+		top_words.append((word,wordcount,score))
+
+	words = (count,total_words,unique_words,top_words)
+	return (fd,scores,words)

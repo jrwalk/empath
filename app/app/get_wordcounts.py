@@ -5,9 +5,6 @@ import glob
 import pickle
 import re
 import pandas
-import wordcloud
-import matplotlib.pyplot as plt
-plt.ioff()
 
 
 def getter(drug):
@@ -23,7 +20,14 @@ def getter(drug):
 			Default None.  Passed to drug_mentions.texts.
 
 	RETURNS:
-
+		count: int.
+			number of processed posts in word counter object.
+		limit: int or None.
+			cap on scraper from word_count.word_counts.
+		freq: nltk.probability.FreqDist object.
+			frequency distribution of words.
+		scores: pandas.DataFrame object.
+			DataFrame of TF-IDF scores for words, pre-sorted.
 	"""
 	drug = drug.lower()
 	files = glob.glob(
@@ -50,19 +54,3 @@ def getter(drug):
 		columns=['word','score'])
 	tfidf_scores.sort_values(by='score',ascending=False,inplace=True)
 	return (count,limit,freq,tfidf_scores)
-
-
-def visualizer(tfidf_scores,drugname):
-	"""Produces visualization of wordcount data, using output from getter().
-
-	ARGS:
-		tfidf_scores: pandas.DataFrame.
-			DataFrame of words, tf-idf scores from getter() method.
-		drugname: string.
-			String generated in views.py for display.
-	"""
-	scores_lim = tfidf_scores.head(20)	# cap at top 20 words
-	scores_list = [tuple(row) for row in scores_lim.values]
-	cloud = wordcloud.WordCloud()
-	cloud.fit_words(scores_list)
-	cloud.to_image().save('app/static/images/wordcloud_%s.png' % drugname)

@@ -81,3 +81,8 @@ def texts(drug=None,limit=None):
 
 	for row in cur:
 		yield row[0]
+
+
+def chunks(drug,limit=None):
+	"""Generator of chunks for selected drug.
+	"""

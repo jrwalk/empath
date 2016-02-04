@@ -3,6 +3,7 @@
 import pymysql as pms
 from collections import Counter
 import numpy as np
+from word_count import tokenize
 
 
 def corenlp_sentiment(drug=None):
@@ -31,8 +32,10 @@ def corenlp_sentiment(drug=None):
 	sentiments = []
 	for row in cur:
 		sents = row[0].split()
-		for sent in sents:
-			sentiments.append(sent)
+		c = Counter(sents)
+		sentiments.append(c.most_common(1)[0][0])
+		#for sent in sents:
+			#sentiments.append(sent)
 	conn.close()
 
 	total = len(sentiments)

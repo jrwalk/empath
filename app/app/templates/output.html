@@ -14,15 +14,17 @@
     <!-- Bootstrap core CSS -->
     <link href="../static/css/bootstrap.min.css" rel="stylesheet">
 
+    <script src="../static/js/d3.v3.js"></script>
+
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <link href="../../assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+    <!--<link href="../../assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
-    <link href="starter-template.css" rel="stylesheet">
+    <!--<link href="starter-template.css" rel="stylesheet">
 
     <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
     <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
-    <script src="../../assets/js/ie-emulation-modes-warning.js"></script>
+    <!--<script src="../../assets/js/ie-emulation-modes-warning.js"></script>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -82,31 +84,118 @@
   </div> <!-- /.container-->
 
   <div class="container">
-    <div class="starter-template">
+    <div class="headerbox">
       <h3>Results for <b>{{ drugname }}</b></h3>
+      <p>The database of reddit comments contains {{ words[0] }} hits.</p>
     </div>
+    <style>
+    </style>
 
-    <div>
-      <p>Naive Bayes Sentiment Analysis Result: {{ nba_sent[0] }} positive
-        (compared to {{ nba_sent[1] }} overall sentiment)</p>
-      <p>Neural Net Tree Sentiment Analysis Result: </p>
-      {% for term in nn_sent[0][0].keys() %}
-        <p>{{ term }}: {{ nn_sent[0][0][term]/nn_sent[0][1] }}</p>
-      {% endfor %}
-      <hr>
+    <hr>
+
+    <div class="topper">
+
+      <p>Sentiment ratings for {{ drugname}} are shown below, divided into 
+    <font color="#9CBA7F">positive</font>, <font color="#beccae">neutral</font>, 
+    and <font color="#d84b2a">negative</font> ratings.  The comment ratings for 
+    The drug database as a whole are shown in the outer ring of the pie chart.</p>
+
     </div>
+    <style>
+    .topper{
+      margin-left: 160px;
+      margin-right: 160px;
+    }
+    </style>
+
+    <div class="sidebyside">
+    <div id="sentimentwheel_div"><!-- visualizer for sentiment analysis -->
+
+      <script src="../static/js/d3.v3.js"></script>
+      <script>
+
+      var dataset = {
+        term: [{{ nn_sent[0][0]['Positive'] + nn_sent[0][0]['Verypositive'] }},
+          {{ nn_sent[0][0]['Neutral'] }},
+          {{ nn_sent[0][0]['Verynegative'] + nn_sent[0][0]['Negative'] }}],
+        all: [{{ nn_sent[1][0]['Positive'] + nn_sent[1][0]['Verypositive'] }},
+          {{ nn_sent[1][0]['Neutral'] }},
+          {{ nn_sent[1][0]['Verynegative'] + nn_sent[1][0]['Negative'] }}]
+      };
+
+      var width = 600,
+          height = 450,
+          cwidth = 150;
+
+      var color = d3.scale.ordinal()
+        .domain(['Positive','Neutral','Negative'])
+        .range(["#9CBA7F", "#beccae", "#d84b2a"])
+
+      var pie = d3.layout.pie()
+          .sort(null);
+
+      var arc = d3.svg.arc();
+
+      var svg = d3.select("#sentimentwheel_div").append("svg")
+          .attr("width", width)
+          .attr("height", height)
+          .append("g")
+          .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+      var gs = svg.selectAll("g").data(d3.values(dataset)).enter().append("g");
+      var path = gs.selectAll("path")
+          .data(function(d) { return pie(d); })
+        .enter().append("path")
+          .attr("fill", function(d, i) { return color(i); })
+          .attr("d", function(d, i, j) { return arc.innerRadius(2 + cwidth*j).outerRadius(cwidth*(0.25*j+1))(d); });
+
+      </script>
+    </div>
+    <div class="sidetext">
+
+      <p>Comments are <span id='num1'></span> <font color="#9CBA7F">positive</font>, compared to <span id='num2'></span> overall -- {{ strs[0][0] }}% <b>{{ strs[0][1] }}</b> than average.</p>
+      <p>Comments are <span id='num3'></span> <font color="#d84b2a">negative</font>, compared to <span id='num4'></span> overall -- {{ strs[1][0] }}% <b>{{ strs[1][1] }}</b> than average.</p>
+
+      <script> 
+        var num = d3.format(".2%")({{ (nn_sent[0][0]['Positive']+nn_sent[0][0]['Verypositive'])/nn_sent[0][1] }});
+        d3.select('#num1').text(num);
+      </script>
+      <script>
+        var num = d3.format(".2%")({{ (nn_sent[1][0]['Positive']+nn_sent[1][0]['Verypositive'])/nn_sent[1][1] }});
+        d3.select('#num2').text(num);
+      </script>
+      <script>
+        var num = d3.format(".2%")({{ (nn_sent[0][0]['Negative']+nn_sent[0][0]['Verynegative'])/nn_sent[0][1] }});
+        d3.select('#num3').text(num)
+      </script>
+      <script>
+        var num = d3.format(".2%")({{ (nn_sent[1][0]['Negative']+nn_sent[1][0]['Verynegative'])/nn_sent[1][1] }});
+        d3.select('#num4').text(num)
+      </script>
+
+    </div>
+    </div>
+    <style>
+    .sidebyside{
+      display: flex;
+    }
+    #sentimentwheel_div{
+      width: 600px;
+    }
+    .sidetext{
+      flex-grow: 1;
+    }
+    </style>
 
 
 
-
-  <div class='wordbubble' id="wordbubble_div">
+  <div class='wordbubble' id="wordbubble_div"><!-- visualizer for word count -->
 
     <h4>Most Frequent Words:</h4>
     <p>Drug name returns {{ words[0] }} hits, with {{ words[1] }} words 
         ({{ words[2] }} unique).</p>
 
-    <!--<script src="//d3js.org/d3.v3.min.js"></script>-->
-    <script src="/d3/d3.v3.js"></script>
+    <script src="../static/js/d3.v3.js"></script>
     <script>
 
       var col = d3.scale.ordinal()
