@@ -32,6 +32,7 @@ def input():
 def output():
 	# pull drug name from request field, check for match
 	drug = request.args.get('ID')
+	drug = drug.split()[0]	# 
 	gen = _drug_dict.get(drug.upper(),None)
 	if gen is not None:	# drug is in dict
 		if drug.lower() == gen.lower():	# input is generic

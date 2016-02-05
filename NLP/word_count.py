@@ -4,6 +4,7 @@ import pymysql as pms
 import pickle
 import nltk
 from nltk.probability import FreqDist
+from nltk.stem import WordNetLemmatizer
 import drug_mentions as dm
 import stop_words as sw
 
@@ -13,7 +14,10 @@ _drug_dict = bdd.build_drug_dict(
 _gen_dict = bdd.generic_dict(_drug_dict)
 
 
-def word_count(drug=None,limit=None,pos_filter=True):
+_lemmatizer = WordNetLemmatizer()
+
+
+def word_count(drug=None,limit=None,pos_filter=False,lemma=True):
 	"""Scans comment texts (from drug_mentions.texts) for selected drug, 
 	calculates most common words.
 
@@ -30,6 +34,8 @@ def word_count(drug=None,limit=None,pos_filter=True):
 			Defaults to None (returns all hits).
 		pos_filter: boolean.
 			Passed to tokenize(), set True to use part-of-speech filtering.
+		lemma: boolean.
+			Passed to tokenize(), set True to use lemmatization.
 
 	RETURNS:
 		freq: nltk.probability.FreqDist object.
@@ -46,12 +52,12 @@ def word_count(drug=None,limit=None,pos_filter=True):
 
 	freq = FreqDist()
 	for text in texts:
-		freq.update(tokenize(text,drug,pos_filter=pos_filter))
+		freq.update(tokenize(text,drug,pos_filter=pos_filter,lemma=lemma))
 
 	return freq
 
 
-def tokenize(text,drug=None,pos_filter=True):
+def tokenize(text,drug=None,pos_filter=False,lemma=True):
 	"""Simple (or not) tokenizer for given text block.
 
 	ARGS:
@@ -63,6 +69,8 @@ def tokenize(text,drug=None,pos_filter=True):
 			drug name (added to stoplist to prevent self-mentions)
 		pos_filter: boolean.
 			set True to use part-of-speech filtering.
+		lemma: boolean.
+			set True to use lemmatization.
 
 	RETURNS:
 		words: list.
@@ -109,10 +117,17 @@ def tokenize(text,drug=None,pos_filter=True):
 			'VBZ']
 		tokens = [word for (word,tag) in tagged_tokens if tag in tags]
 
+	if lemma:
+		tokens = [_lemmatizer.lemmatize(word,pos='v') for word in tokens]
+		tokens = [_lemmatizer.lemmatize(word,pos='n') for word in tokens]
+
+	# one more pass through stopword filter
+	tokens = [word for word in tokens if word not in stops]
+
 	return tokens
 
 
-def word_counts(limit=None):
+def word_counts(limit=None,pos_filter=False,lemma=True):
 	"""Loops through available (generic) drugs, constructs frequency 
 	distribution for each, along with hit count in database.  Saves count 
 	pull limit, and nltk.probability.FreqDist object to pickle file.
@@ -120,6 +135,10 @@ def word_counts(limit=None):
 	KWARGS:
 		limit: int or None.
 			Cap limit on SQL pulls, passed to word_count.
+		pos_filter: boolean.
+			set True to use part-of-speech filtering in tokenizer.
+		lemma: boolean.
+			set True to use lemmatization in tokenizer.
 
 	RAISES:
 		ValueError:
@@ -136,7 +155,10 @@ def word_counts(limit=None):
 
 	for drug in _gen_dict.keys()+[None,'ANTIDEPRESSANT']:
 		try:
-			freq = word_count(drug=drug,limit=limit,pos_filter=False)
+			freq = word_count(drug=drug,
+				limit=limit,
+				pos_filter=pos_filter,
+				lemma=lemma)
 		except ValueError:
 			raise ValueError('Invalid drug name.')
 

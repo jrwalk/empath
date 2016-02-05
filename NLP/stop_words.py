@@ -34,7 +34,7 @@ def stop_words():
 		'anti',
 		'depressed','depression',
 		'though',
-		'meds','medication',
+		'med','meds','medication',
 		'doctor','psychiatrist',
 		'weeks',
 		'amp','gt','lt',
@@ -42,7 +42,10 @@ def stop_words():
 		'ago',
 		'started',
 		'pretty',
-		'levels']
+		'levels',
+		'likely',
+		'make',
+		'le']
 	for s in string.punctuation:
 		expansion.append(s)
 
