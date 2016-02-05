@@ -32,7 +32,7 @@ def input():
 def output():
 	# pull drug name from request field, check for match
 	drug = request.args.get('ID')
-	drug = drug.split()[0]	# 
+	drug = drug.split()[0]	# quick and dirty input sanitization
 	gen = _drug_dict.get(drug.upper(),None)
 	if gen is not None:	# drug is in dict
 		if drug.lower() == gen.lower():	# input is generic
@@ -66,6 +66,13 @@ def output():
 		nn_sent=(nn_sent,nn_sent_all),
 		nba_sent=(nba_sent,nba_sent_all),
 		strs=strs)
+
+
+@app.route('/contact')
+def contact():
+	"""renderer for contact page.
+	"""
+	return render_template('contact.html')
 
 
 def parse_sentiment(nn_sent,nn_sent_all):
