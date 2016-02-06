@@ -14,6 +14,7 @@ from stop_words import stop_words
 import pandas
 from word_count import tokenize
 import sys
+from ordered_set import OrderedSet
 
 import build_drug_dict as bdd
 _drug_dict = bdd.build_drug_dict(
@@ -120,7 +121,7 @@ def map_subtrees(trees,drugs):
 		trees: list.
 			list of nltk.tree.Tree objects corresponding to each sentence.
 		drugs: list.
-			list of drugs mentioned in comment.
+			list of drugs mentioned in comment (all sentences).
 
 	RETURNS:
 		texts: dict.
@@ -138,13 +139,14 @@ def map_subtrees(trees,drugs):
 	precedence = []
 	lastdrug = 'preamble'
 	for tree in trees:
-		#precedence = 0
+		# list which drugs are in sentence tree
 		mentions.append([d for d in drugs if d in tree.leaves()])
 		subtrees = parse_tree(tree,drugs)
 		for sub in subtrees:
 			subtext = sub.leaves()
+			# which drug is in subtree: should be one or zero drugs
 			drug = [d for d in drugs if d in subtext]
-			if len(drug) > 0:
+			if len(drug) > 0:	# there is a drug mention in the subtext
 				drug = drug[0]
 				lastdrug = drug
 			else:
@@ -261,7 +263,7 @@ def build_chunks(drug,classifier,limit=None):
 		trees,sentiments = build_tree(body,drugs)
 		subtexts,mentions,precedence = map_subtrees(trees,drugs)
 
-		for i,drug in enumerate(set(precedence)):
+		for i,drug in enumerate(OrderedSet(precedence)):
 			drugtext = []
 			for subtext in subtexts[drug]:
 				for word in subtext:

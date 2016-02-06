@@ -75,6 +75,13 @@ def contact():
 	return render_template('contact.html')
 
 
+@app.route('/about')
+def about():
+	"""renderer for about page.
+	"""
+	return render_template('about.html')
+
+
 def parse_sentiment(nn_sent,nn_sent_all):
 	"""constructs strings of positivity/negativity ratings compared to average 
 	from neural-net based analyzer.
