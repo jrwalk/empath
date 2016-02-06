@@ -4,6 +4,7 @@ for remaps between generic and brand names), report count total into SQL table.
 import pymysql as pms
 import build_drug_dict as bdd
 import numpy as np
+from word_count import tokenize
 
 _drug_dict = bdd.build_drug_dict(
 	'/home/jrwalk/python/empath/data/drugs/antidepressants.txt')
@@ -35,6 +36,8 @@ def tally():
 		for drug in _drug_dict:
 			body = body.replace(drug,_drug_dict[drug])
 
+		tokens = tokenize(body,None,False,False)
+
 		# generate row in `empath`.`Mentions` for post
 		# loop through generics, detect presence, update Mentions as needed
 		try:
@@ -44,7 +47,7 @@ def tally():
 			pass
 		counter = 0
 		for drug in _generics:
-			if drug in body:
+			if drug.lower() in tokens:
 				counter += 1
 				flagger = ("UPDATE `Mentions` SET `%s`=True WHERE `id`='%s'" 
 					% (drug.lower(),post_id))
