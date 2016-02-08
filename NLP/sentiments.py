@@ -33,7 +33,10 @@ def corenlp_sentiment(drug=None):
 	for row in cur:
 		sents = row[0].split()
 		c = Counter(sents)
-		sentiments.append(c.most_common(1)[0][0])
+		try:
+			sentiments.append(c.most_common(1)[0][0])
+		except:
+			pass
 		#for sent in sents:
 			#sentiments.append(sent)
 	conn.close()

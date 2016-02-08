@@ -102,6 +102,42 @@
 
     <hr>
 
+    <div class="recommender">
+
+    <h3>Recommendations</h3>
+
+      <p><b><span id="stayedfrac"></span></b> stayed on their current drug.</p>
+
+      <p>Of those that switched, <b><span id="betterfrac"></span></b> Reported 
+      improved condition via sentiment analysis.</p>
+
+      <p>Of those that switched, the majority (<b><span id="bestfrac"></span></b>)
+      reported improved condition switching to <b>{{ recommendation[3] }}</b>.</p>
+
+      <script>
+      var num = d3.format(".2%")({{ recommendation[0] }})
+      d3.select("#stayedfrac").text(num)
+      </script>
+      <script>
+      var num = d3.format(".2%")({{ recommendation[1] }})
+      d3.select("#betterfrac").text(num)
+      </script>
+      <script>
+      var num = d3.format(".2%")({{ recommendation[2] }})
+      d3.select("#bestfrac").text(num)
+      </script>
+    </div>
+    <style>
+    .recommender{
+      text-align: center;
+      font-size: 18px;
+      margin-left: 100px;
+      margin-right: 100px;
+    }
+    </style>
+
+    <hr>
+
     <div class="sidebyside">
       <div id="sentimentwheel_div"><!-- visualizer for sentiment analysis -->
 

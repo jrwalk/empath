@@ -22,6 +22,7 @@ cl = train_classifier()
 import get_wordcounts as gw
 import top_comments as tc
 import sentiments as s
+import recommender as r
 
 @app.route('/index')
 @app.route('/')
@@ -59,13 +60,16 @@ def output():
 
 	strs = parse_sentiment(nn_sent,nn_sent_all)
 
+	recommendation = process_recommendation(gen.lower())
+
 	return render_template('output.html',
 		drugname=drugname,
 		words=words,
 		comments=comments,
 		nn_sent=(nn_sent,nn_sent_all),
 		nba_sent=(nba_sent,nba_sent_all),
-		strs=strs)
+		strs=strs,
+		recommendation=recommendation)
 
 
 @app.route('/contact')
@@ -223,3 +227,32 @@ def get_word_scores(drug,limit=20):
 
 	words = (count,total_words,unique_words,top_words)
 	return (fd,scores,words)
+
+
+def process_recommendation(drug):
+	"""Pulls drug recommendation stats from recommender.py, formats.
+
+	ARGS:
+		drug: string.
+			generic name of drug.
+
+	RETURNS:
+		data: tuple.
+			tuple of (stayed_frac,better_frac,best_frac,drugname)
+	"""
+	stayed_on_drug,switched_drug,switched_drug_better,best_drug = r.recommend(drug)
+
+	total = stayed_on_drug + switched_drug
+	stayed_frac = float(stayed_on_drug)/total
+	better_frac = float(switched_drug_better)/switched_drug
+	best_frac = float(best_drug[1])/switched_drug
+	bdrug = best_drug[0]
+
+	gen = _drug_dict.get(bdrug.upper(),None)
+	if bdrug.lower() == gen.lower():	# input is generic
+		drugname = bdrug.lower()
+	else:
+		drugname = "%s (%s)" % (bdrug.lower(),gen.lower())
+
+	data = (stayed_frac,better_frac,best_frac,drugname)
+	return data
