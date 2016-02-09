@@ -2,6 +2,7 @@ from flask import render_template, request
 from app import app
 import json
 import numpy as np
+import pickle
 
 import sys
 sys.path.append('/home/jrwalk/python/empath/')
@@ -15,9 +16,12 @@ import build_drug_dict as bdd
 _drug_dict = bdd.build_drug_dict(
 	'/home/jrwalk/python/empath/data/drugs/antidepressants.txt')
 _generics = bdd.generics(_drug_dict)
+_gen_dict = bdd.generic_dict(_drug_dict)
 
-from chunker import train_classifier
-cl = train_classifier()
+#from chunker import train_classifier
+#cl = train_classifier()
+with open('/home/jrwalk/python/empath/data/training/classifier.pkl','r') as r:
+	cl = pickle.load(r)
 
 import get_wordcounts as gw
 import top_comments as tc
@@ -34,13 +38,10 @@ def output():
 	# pull drug name from request field, check for match
 	drug = request.args.get('ID')
 	drug = drug.split()[0]	# quick and dirty input sanitization
-	gen = _drug_dict.get(drug.upper(),None)
-	if gen is not None:	# drug is in dict
-		if drug.lower() == gen.lower():	# input is generic
-			drugname = drug.lower()
-		else:
-			drugname = "%s (%s)" % (drug.lower(),gen.lower())
-	else:	# drug not in dict
+
+	try:
+		drugname,gen = drugnames(drug)
+	except ValueError:
 		drugs = []
 		with open('/home/jrwalk/python/empath/data/drugs/antidepressants.txt','r') as readfile:
 			for line in readfile:
@@ -64,6 +65,7 @@ def output():
 
 	return render_template('output.html',
 		drugname=drugname,
+		gen=gen.lower(),
 		words=words,
 		comments=comments,
 		nn_sent=(nn_sent,nn_sent_all),
@@ -248,11 +250,38 @@ def process_recommendation(drug):
 	best_frac = float(best_drug[1])/switched_drug_better
 	bdrug = best_drug[0]
 
-	gen = _drug_dict.get(bdrug.upper(),None)
-	if bdrug.lower() == gen.lower():	# input is generic
-		drugname = bdrug.lower()
-	else:
-		drugname = "%s (%s)" % (bdrug.lower(),gen.lower())
+	drugname,gen = drugnames(bdrug)
 
 	data = (stayed_frac,better_frac,best_frac,drugname)
 	return data
+
+
+def drugnames(drug):
+	"""string handler to produce formatted drug name.
+
+	ARGS:
+		drug: string.
+			input drug name.
+
+	RETURNS:
+		formatted_drug: string.
+			formatted string of drug name of the form 
+			'generic name (brand names)'.
+		gen: string.
+			forced generic drug name.
+
+	RAISES: 
+		ValueError:
+			raised if drug is not in database.
+	"""
+	# first check that drug is in database
+	gen = _drug_dict.get(drug.upper(),None)
+	if gen is None:
+		raise ValueError("invalid drug.")
+
+	formatted_drug = gen.lower()+" ("	# start off with generic name
+	brand_names = _gen_dict[gen.upper()]
+	for brand in brand_names:
+		formatted_drug += brand.lower()+', '
+	formatted_drug = formatted_drug[:-2]+')'
+	return formatted_drug,gen

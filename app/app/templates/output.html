@@ -107,7 +107,7 @@
       medications to find one that works.  The sentiment analyzer can find the most 
       successful switch reported by users.</p>
 
-      <p>Of the users who reported starting {{ drugname }}, 
+      <p>Of the users who reported starting {{ gen }}, 
       <b><span id="stayedfrac"></span></b> stayed with it.</p>
 
       <p>Of those that switched, <b><span id="betterfrac"></span></b> reported 
@@ -145,7 +145,7 @@
 
         <h3>Sentiment Analysis</h3>
 
-        <p>Neural-Net based sentiment analysis classification for {{ drugname }},<br>
+        <p>Neural-Net based sentiment analysis classification for {{ gen }},<br>
         with the average rating across all drugs shown in the outer ring.</p>
 
         <p>Comments are <span id='num1'></span> <font color="#007FFF">positive</font>, compared to <span id='num2'></span> overall:<br> {{ strs[0][0] }}% <b>{{ strs[0][1] }}</b> than average.</p>
@@ -305,9 +305,12 @@
     #sentimentwheel_div{
       width: 600px;
       font-size: 16px;
+      text-align: center;
     }
     .wordbubble{
       flex-grow: 1;
+      margin-right: 100px;
+      text-align: center;
     }
     .heading{
       font-size: 16px;
@@ -320,7 +323,7 @@
     <h3>Top reddit posts:</h3>
 
     <div class="header">
-      <p>Below are a selection of reddit comments discussiong {{ drugname }}, 
+      <p>Below are a selection of reddit comments discussing {{ gen }}, 
       ranked by score (normalized to subreddit population).</p>
     </div>
 
