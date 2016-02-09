@@ -23,6 +23,26 @@ _generics = bdd.generics(_drug_dict)
 _gen_dict = bdd.generic_dict(_drug_dict)
 
 
+def tokenize_leaves(tree):
+	"""renders leaves of input tree down into tokenized list, accounting for 
+	stopwords, lemmatizing, and punctuation.
+
+	ARGS:
+		tree: nltk.tree.Tree object.
+			input tree or subtree.
+
+	RETURNS:
+		tokens: list.
+			list of tokenized words in tree.
+	"""
+	nested = [tokenize(block,None,False,True) for block in tree.leaves()]
+	leaves = []
+	for block in nested:
+		for word in block:
+			leaves.append(word)
+	return leaves
+
+
 def parse_tree(tree,drugs):
 	"""Chunks tree into maximum-size subtrees with one or zero drug mentions.
 
@@ -40,7 +60,9 @@ def parse_tree(tree,drugs):
 	def splitter(tree,drugs):
 		"""inner method for recursion.
 		"""
-		contains = [drug in tree.leaves() for drug in drugs]
+		# render tree leaves into tokenized/lemmatized list
+		leaves = tokenize_leaves(tree)
+		contains = [drug in leaves for drug in drugs]
 		if sum(contains) == 0 or sum(contains) == 1:
 			return [tree]
 		else:
@@ -140,10 +162,10 @@ def map_subtrees(trees,drugs):
 	lastdrug = 'preamble'
 	for tree in trees:
 		# list which drugs are in sentence tree
-		mentions.append([d for d in drugs if d in tree.leaves()])
+		mentions.append([d for d in drugs if d in tokenize_leaves(tree)])
 		subtrees = parse_tree(tree,drugs)
 		for sub in subtrees:
-			subtext = sub.leaves()
+			subtext = tokenize_leaves(sub)
 			# which drug is in subtree: should be one or zero drugs
 			drug = [d for d in drugs if d in subtext]
 			if len(drug) > 0:	# there is a drug mention in the subtext
@@ -185,9 +207,9 @@ def train_classifier():
 	pos_texts = df['Comments'][df['Value'] == 'pos'].tolist()
 	neg_texts = df['Comments'][df['Value'] == 'neg'].tolist()
 
-	pos_data = [(dict([(word,True) for word in tokenize(com,None,False)]),'pos') 
+	pos_data = [(dict([(word,True) for word in tokenize(com,None,False,True)]),'pos') 
 		for com in pos_texts]
-	neg_data = [(dict([(word,True) for word in tokenize(com,None,False)]),'neg') 
+	neg_data = [(dict([(word,True) for word in tokenize(com,None,False,True)]),'neg') 
 		for com in neg_texts]
 	trainingdata = pos_data + neg_data
 
@@ -359,8 +381,8 @@ def write_chunks(drug,classifier,limit=None):
 				"UPDATE Comments SET chunked=True WHERE id=%s",(post_id))
 		except:
 			print("could not insert to table")
+		conn.commit()
 
-	conn.commit()
 	conn.close()
 	return counter
 

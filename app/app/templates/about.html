@@ -59,29 +59,65 @@
     <br><br>
 
     <div class="container content-section">
-        <div class="textblock">
+
+      <iframe src="https://www.slideshare.net/slideshow/embed_code/key/m37wmdQrQtEMva" width="427" height="356" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe> <div style="margin-bottom:5px"> <strong> <a href="https://www.slideshare.net/secret/m37wmdQrQtEMva" title="Empath - extracting smarter sentiments for antidepressants" target="_blank">Empath - extracting smarter sentiments for antidepressants</a> </strong> from <strong><a href="http://www.slideshare.net/JohnWalk2" target="_blank">John Walk</a></strong> </div>
+
+      <div class="textblock">
+
+      <h3>empath: extracting smarter sentiments for antidepressants</h3>
+
       <p>Starting antidepressants can be scary, both from symptoms and from side 
       effects.  This can be all the worse in the first few weeks, particularly 
-      if you need to try several different medications.</p>
+      if you need to try several different medications before finding one that works.</p>
 
-      <p>It can be easy to feel alone in this.  But others are going through 
-      the same - understanding what they're feeling and how they're 
+      <p>It can be easy to feel alone when dealing with depression.  But others 
+      are going through the same as you - understanding what they're feeling and how they're 
       reacting can be a powerful thing.</p>
 
       <p>By extracting conversations on antidepressants from social users on 
-      <a href="http://www.reddit.com">reddit.com</a>, this app can share 
-      sentiments and understanding on antidepressant usage.</p>
+      <a href="http://www.reddit.com">reddit.com</a>, this app shares 
+      sentiments and understanding on antidepressant usage based on keywords for 
+      characterizing conversation topics, analysis of positive & negative sentiments 
+      expressed in comments, and even recommendations for likely successful 
+      alternate medications.</p>
 
-      <p>Keyword sets are generated on the comment texts via term frequency-inverse 
-      document frequency (TF-IDF) filtering.  Sentiment scores for comments are 
-      assessed using the <a href="https://stanfordnlp.github.io/CoreNLP/">Stanford 
-      CoreNLP</a> toolkit.</p>
+      <h3>methods</h3>
 
-      <p>Demo slides are embedded below:</p>
+      <p>The app implements three major components: keyword conversation 
+      characterization, sentiment analysis, and the recommender system.</p>
+
+      <p>Keyword sets are generated based on filtering via term frequency-inverse 
+      document frequency (TF-IDF).  TF-IDF scoring is based on how frequently a 
+      word (more properly, a lemma, or word processed down to its base, without 
+      any attached grammatical information) appears in the target text (the term 
+      frequency).  This score is then normalized by how frequently a word appears 
+      in similar texts, to account for words that are common across the board in 
+      related documents (and therefore aren't useful to characterize a particular 
+      text).  This app scores the TF against an IDF calculated on unrelated web 
+      comments - thus, finding words that are common in comments discussing 
+      antidepressants, <i>and uncommon in other web comments.</i></p>
+
+      <p>Sentiment scores are calculated using the recursive neural net (RNN) method
+      implemented in the  <a href="https://stanfordnlp.github.io/CoreNLP/">Stanford 
+      CoreNLP</a> toolkit.  This allows the sentiment analyzer to account for 
+      semantic relationships between words, rather than simply tallying the sentiment 
+      score based on single-word occurrences.  The RNN method operates on parsed 
+      semantic structures mapping sentences into trees - this also allows sentiment 
+      scoring to be applied to subsections of sentences talking about particular drugs, 
+      as the sentiment score is recursively applied to every node in the tree.</p>
+
+      <p>The recommender system is based on simple logic rules, tracking the new 
+      medications mentioned subsequently by users of the input drug (assuming 
+      conversations are laid out chronologically).  This is then filtered by a 
+      check that the expressed sentiment improved with the new drug, indicating 
+      that the switch was positive for that user.</p>
+
+      <p>The app reports these in a clean, visually-intuitive manner, showing the 
+      sentiment score for the chosen drug compared to the database average, a word 
+      bubbler for conversation topics, a switch recommendation, and a sample of 
+      processed reddit comments (ranked by score normalized to subreddit population 
+      to account for different topical forum sizes).</p>
     </div>
-
-    <iframe src="https://www.slideshare.net/slideshow/embed_code/key/m37wmdQrQtEMva" width="427" height="356" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe> <div style="margin-bottom:5px"> <strong> <a href="https://www.slideshare.net/secret/m37wmdQrQtEMva" title="Empath - extracting smarter sentiments for antidepressants" target="_blank">Empath - extracting smarter sentiments for antidepressants</a> </strong> from <strong><a href="http://www.slideshare.net/JohnWalk2" target="_blank">John Walk</a></strong> </div>
-
     </div>
     <style>
         .textblock{
@@ -90,8 +126,9 @@
             margin-right: 170px;
         }
         .content-section{
-            margin-top: 100px;
+            margin-top: 80px;
             text-align: center;
+            margin-bottom: 80px;
         }
     </style>
 

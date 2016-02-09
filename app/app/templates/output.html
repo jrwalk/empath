@@ -87,12 +87,7 @@
     <div class="headerbox" id="header">
       <h3>Results for <b>{{ drugname }}</b></h3>
       <p>The database of reddit comments contains {{ words[0] }} hits for 
-      this drug.  See below for sentiment and discussion categories.</p>
-
-      <p>Sentiment ratings for {{ drugname}} are shown below, divided into 
-        <font color="#9CBA7F">positive</font>, <font color="#beccae">neutral</font>, 
-        and <font color="#d84b2a">negative</font> ratings.  The comment ratings for 
-        The drug database as a whole are shown in the outer ring of the pie chart.</p>
+      this drug.  See below for recommendation, sentiment and discussion categories.</p>
     </div>
     <style>
       #header{
@@ -104,26 +99,31 @@
 
     <div class="recommender">
 
-    <h3>Recommendations</h3>
+      <h3>Recommendation</h3>
 
-      <p><b><span id="stayedfrac"></span></b> stayed on their current drug.</p>
+      <p>Users starting antidepressants frequently need to switch through multiple 
+      medications to find one that works.  The sentiment analyzer can find the most 
+      successful switch reported by users.</p>
 
-      <p>Of those that switched, <b><span id="betterfrac"></span></b> Reported 
-      improved condition via sentiment analysis.</p>
+      <p>Of the users who reported starting {{ drugname }}, 
+      <b><span id="stayedfrac"></span></b> stayed with it.</p>
 
-      <p>Of those that switched, the majority (<b><span id="bestfrac"></span></b>)
-      reported improved condition switching to <b>{{ recommendation[3] }}</b>.</p>
+      <p>Of those that switched, <b><span id="betterfrac"></span></b> reported 
+      improved condition after switching.</p>
+
+      <p>Users reporting a positive switch had the best success (<b><span id="bestfrac"></span></b>)
+      switching to <b>{{ recommendation[3] }}</b>.</p>
 
       <script>
-      var num = d3.format(".2%")({{ recommendation[0] }})
+      var num = d3.format(".1%")({{ recommendation[0] }})
       d3.select("#stayedfrac").text(num)
       </script>
       <script>
-      var num = d3.format(".2%")({{ recommendation[1] }})
+      var num = d3.format(".1%")({{ recommendation[1] }})
       d3.select("#betterfrac").text(num)
       </script>
       <script>
-      var num = d3.format(".2%")({{ recommendation[2] }})
+      var num = d3.format(".1%")({{ recommendation[2] }})
       d3.select("#bestfrac").text(num)
       </script>
     </div>
@@ -141,25 +141,28 @@
     <div class="sidebyside">
       <div id="sentimentwheel_div"><!-- visualizer for sentiment analysis -->
 
-        <h4>Sentiment Analysis</h4>
+        <h3>Sentiment Analysis</h3>
 
-        <p>Comments are <span id='num1'></span> <font color="#9CBA7F">positive</font>, compared to <span id='num2'></span> overall -- {{ strs[0][0] }}% <b>{{ strs[0][1] }}</b> than average.</p>
-        <p>Comments are <span id='num3'></span> <font color="#d84b2a">negative</font>, compared to <span id='num4'></span> overall -- {{ strs[1][0] }}% <b>{{ strs[1][1] }}</b> than average.</p>
+        <p>Neural-Net based sentiment analysis classification for {{ drugname }},<br>
+        with the average rating in the database shown in the outer ring.</p>
+
+        <p>Comments are <span id='num1'></span> <font color="#007FFF">positive</font>, compared to <span id='num2'></span> overall:<br> {{ strs[0][0] }}% <b>{{ strs[0][1] }}</b> than average.</p>
+        <p>Comments are <span id='num3'></span> <font color="#d84b2a">negative</font>, compared to <span id='num4'></span> overall:<br> {{ strs[1][0] }}% <b>{{ strs[1][1] }}</b> than average.</p>
 
         <script> 
-          var num = d3.format(".2%")({{ (nn_sent[0][0]['Positive']+nn_sent[0][0]['Verypositive'])/nn_sent[0][1] }});
+          var num = d3.format(".1%")({{ (nn_sent[0][0]['Positive']+nn_sent[0][0]['Verypositive'])/nn_sent[0][1] }});
           d3.select('#num1').text(num);
         </script>
         <script>
-          var num = d3.format(".2%")({{ (nn_sent[1][0]['Positive']+nn_sent[1][0]['Verypositive'])/nn_sent[1][1] }});
+          var num = d3.format(".1%")({{ (nn_sent[1][0]['Positive']+nn_sent[1][0]['Verypositive'])/nn_sent[1][1] }});
           d3.select('#num2').text(num);
         </script>
         <script>
-          var num = d3.format(".2%")({{ (nn_sent[0][0]['Negative']+nn_sent[0][0]['Verynegative'])/nn_sent[0][1] }});
+          var num = d3.format(".1%")({{ (nn_sent[0][0]['Negative']+nn_sent[0][0]['Verynegative'])/nn_sent[0][1] }});
           d3.select('#num3').text(num);
         </script>
         <script>
-          var num = d3.format(".2%")({{ (nn_sent[1][0]['Negative']+nn_sent[1][0]['Verynegative'])/nn_sent[1][1] }});
+          var num = d3.format(".1%")({{ (nn_sent[1][0]['Negative']+nn_sent[1][0]['Verynegative'])/nn_sent[1][1] }});
           d3.select('#num4').text(num);
         </script>
 
@@ -181,7 +184,7 @@
 
         var color = d3.scale.ordinal()
           .domain(['Positive','Neutral','Negative'])
-          .range(["#9CBA7F", "#beccae", "#d84b2a"])
+          .range(["#007FFF", "#beccae", "#d84b2a"])
 
         var pie = d3.layout.pie()
             .sort(null);
@@ -205,16 +208,32 @@
       </div>
       <div class="wordbubble" id="wordbubble_div">
 
-        <h4>Most Frequent Words:</h4>
-        <p>Drug name returns {{ words[0] }} hits, with {{ words[1] }} words 
-          ({{ words[2] }} unique).</p>
+        <h3>Most Frequent Words:</h3>
+        <div class="heading">
+          <p>Drug name returns {{ words[0] }} hits, with {{ words[1] }} words 
+          ({{ words[2] }} unique).  Word bubble size indicates term frequency 
+          (mouse over for detailed statistics).</p>
+
+          <p>Naive Bayes sentiment scoring is <span id="nbapercent"></span> 
+          <font color="#007fff">positive</font>, compared to 
+          <span id="nbapercentall"></span> average.</p>
+
+          <script>
+            var num = d3.format(".1%")({{ nba_sent[0] }});
+            d3.select("#nbapercent").text(num);
+          </script>
+          <script>
+            var num = d3.format(".1%")({{ nba_sent[1] }});
+            d3.select("#nbapercentall").text(num)
+          </script>
+        </div>
 
       <script src="../static/js/d3.v3.js"></script>
       <script>
 
         var col = d3.scale.ordinal()
           .domain(['negative','neutral','positive'])
-          .range(["#d84b2a", "#beccae", "#7aa25c"])
+          .range(["#d84b2a", "#beccae", "#007fff"])
 
         var diameter = 600,
             format = d3.format(",d"),
@@ -243,9 +262,9 @@
           node.append("title")
               .text(function(d) { return "word: " + d.word + "\n" + 
               "word count: " + format(d.value) + "\n" + 
-              "frequency: "+ d3.format(".2%")(d.freq) + "\n" +
+              "frequency: "+ d3.format(".1%")(d.freq) + "\n" +
               "TF-IDF score: " + d3.format(".5f")(d.score) + "\n" +
-              "Positivity: " + d3.format(".2%")(d.pscore); });
+              "Positivity: " + d3.format(".1%")(d.pscore); });
 
           node.append("circle")
               .attr("r", function(d) { return d.r; })
@@ -275,18 +294,6 @@
 
       </script>
 
-      <p>Naive Bayes single-word sentiments are <span id="nbapercent"></span> 
-      positive, compared to <span id="nbapercentall"></span> average.</p>
-
-      <script>
-        var num = d3.format(".2%")({{ nba_sent[0] }});
-        d3.select("#nbapercent").text(num);
-      </script>
-      <script>
-        var num = d3.format(".2%")({{ nba_sent[1] }});
-        d3.select("#nbapercentall").text(num)
-      </script>
-
     </div>
   </div>
   <style>
@@ -295,16 +302,26 @@
     }
     #sentimentwheel_div{
       width: 600px;
+      font-size: 16px;
     }
     .wordbubble{
       flex-grow: 1;
+    }
+    .heading{
+      font-size: 16px;
     }
   </style>
 
   <hr>
 
   <div class="commentblock">
-    <p>Top reddit posts:</p>
+    <h3>Top reddit posts:</h3>
+
+    <div class="header">
+      <p>Below are a selection of reddit comments discussiong {{ drugname }}, 
+      ranked by score (normalized to subreddit population).</p>
+    </div>
+
     {%for comment in comments %}
       <p>written by <b>{{ comment[0] }}</b> in /r/{{ comment[4] }} at 
         {{ comment [2] }}, {{ comment [3] }} points:</p>
@@ -318,12 +335,16 @@
       margin-left: 160px;
       margin-right: 160px;
     }
+    .header{
+      font-size: 16px;
+    }
   </style>
 
 <br><br>
 
   <div>
     <h4>Top words (sorted by TF-IDF score)</h4>
+
     <table class="table table-hover">
       <tr><th></th><th>Word</th><th>Instances</th><th>Percent</th>
         <th>TF-IDF Score</th></tr>

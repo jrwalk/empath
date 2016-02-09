@@ -245,7 +245,7 @@ def process_recommendation(drug):
 	total = stayed_on_drug + switched_drug
 	stayed_frac = float(stayed_on_drug)/total
 	better_frac = float(switched_drug_better)/switched_drug
-	best_frac = float(best_drug[1])/switched_drug
+	best_frac = float(best_drug[1])/switched_drug_better
 	bdrug = best_drug[0]
 
 	gen = _drug_dict.get(bdrug.upper(),None)

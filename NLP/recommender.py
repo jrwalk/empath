@@ -3,6 +3,7 @@
 import pymysql as pms
 import pandas
 from collections import Counter
+import numpy as np
 
 
 def recommend(drug):
@@ -52,12 +53,17 @@ def recommend(drug):
 	data = {}
 	for post_id in starts.keys():
 		init_data = starts[post_id]
-		final_data = finishes[post_id]
+		try:
+			final_data = finishes[post_id]
+		except KeyError:
+			final_data = (np.nan,np.nan,np.nan)
 		data[post_id] = init_data+final_data
 
 	data = pandas.DataFrame.from_dict(data,orient='index')
 	data.columns = ['init_sent','init_nbsent',
 		'drug','final_sent','final_nbsent']
+
+	data.dropna(subset=['drug','final_sent','final_nbsent'],inplace=True)
 
 	switched_drug = len(data)
 	data = data[data.final_nbsent > data.init_nbsent]
