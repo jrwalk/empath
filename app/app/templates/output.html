@@ -87,7 +87,9 @@
     <div class="headerbox" id="header">
       <h3>Results for <b>{{ drugname }}</b></h3>
       <p>The database of reddit comments contains {{ words[0] }} hits for 
-      this drug.  See below for recommendation, sentiment and discussion categories.</p>
+      this drug.  Sentiments are encoded by <font color="#007FFF">positive</font>, 
+      <font color="#d84b2a">negative</font>, and <font color="#beccae">neutral</font> 
+      characterization.</p>
     </div>
     <style>
       #header{
@@ -144,7 +146,7 @@
         <h3>Sentiment Analysis</h3>
 
         <p>Neural-Net based sentiment analysis classification for {{ drugname }},<br>
-        with the average rating in the database shown in the outer ring.</p>
+        with the average rating across all drugs shown in the outer ring.</p>
 
         <p>Comments are <span id='num1'></span> <font color="#007FFF">positive</font>, compared to <span id='num2'></span> overall:<br> {{ strs[0][0] }}% <b>{{ strs[0][1] }}</b> than average.</p>
         <p>Comments are <span id='num3'></span> <font color="#d84b2a">negative</font>, compared to <span id='num4'></span> overall:<br> {{ strs[1][0] }}% <b>{{ strs[1][1] }}</b> than average.</p>
@@ -211,12 +213,12 @@
         <h3>Most Frequent Words:</h3>
         <div class="heading">
           <p>Drug name returns {{ words[0] }} hits, with {{ words[1] }} words 
-          ({{ words[2] }} unique).  Word bubble size indicates term frequency 
+          ({{ words[2] }} unique).  <br>Word bubble size indicates term frequency 
           (mouse over for detailed statistics).</p>
 
-          <p>Naive Bayes sentiment scoring is <span id="nbapercent"></span> 
-          <font color="#007fff">positive</font>, compared to 
-          <span id="nbapercentall"></span> average.</p>
+          <p>Naive Bayes sentiment scoring for the word list is 
+          <span id="nbapercent"></span> <font color="#007fff">positive</font>, 
+          <br>compared to <span id="nbapercentall"></span> average.</p>
 
           <script>
             var num = d3.format(".1%")({{ nba_sent[0] }});
