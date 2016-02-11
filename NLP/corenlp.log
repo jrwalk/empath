@@ -1,1 +1,0 @@
-java -mx5g -cp "/home/jrwalk/corenlp/*" edu.stanford.nlp.pipeline.StanfordCoreNLP -annotators tokenize,ssplit,parse,pos,sentiment -file input.txt -outputFormat xml

@@ -1,8 +1,9 @@
-from flask import render_template, request
+import flask
+from flask import render_template, request, jsonify
 from app import app
-import json
 import numpy as np
 import pickle
+import json
 
 import sys
 sys.path.append('/home/jrwalk/python/empath/')
@@ -88,6 +89,13 @@ def about():
 	return render_template('about.html')
 
 
+@app.route('/data')
+def get_data():
+	with open('app/static/data/scores.json','r') as r:
+		json_data = flask.json.load(r)
+	return jsonify(json_data)
+
+
 def parse_sentiment(nn_sent,nn_sent_all):
 	"""constructs strings of positivity/negativity ratings compared to average 
 	from neural-net based analyzer.
@@ -125,7 +133,6 @@ def parse_sentiment(nn_sent,nn_sent_all):
 	pos = (pos_scale,pos_str)
 	neg = (neg_scale,neg_str)
 	return (pos,neg)
-	
 
 
 def rip_to_json(freqdist,scores,limit=20):
@@ -144,14 +151,14 @@ def rip_to_json(freqdist,scores,limit=20):
 			cap on how many words to parse into bubbler.
 	"""
 	# initialize structure
-	data = {'name':'wordscores',
-		'children':[
-			{'name':'positive',
-			'children':[]},
-			{'name':'neutral',
-			'children':[]},
-			{'name':'negative',
-			'children':[]}
+	data = {"name":"wordscores",
+		"children":[
+			{"name":"positive",
+			"children":[]},
+			{"name":"neutral",
+			"children":[]},
+			{"name":"negative",
+			"children":[]}
 		]}
 
 	scores = scores.head(limit)
@@ -161,27 +168,27 @@ def rip_to_json(freqdist,scores,limit=20):
 		freq = float(freqdist[word])/freqdist.N()
 		count = freqdist[word]
 
-		pscore = cl.prob_classify({word:True}).prob('pos')
+		pscore = cl.prob_classify({word:True}).prob("pos")
 		if pscore>=0.6:
-			data['children'][0]['children'].append({'name':word,
-				'size':count,
-				'score':score,
-				'freq':freq,
-				'pscore':pscore})
+			data["children"][0]["children"].append({"name":word,
+				"size":count,
+				"score":score,
+				"freq":freq,
+				"pscore":pscore})
 		elif pscore>=0.4 and pscore<0.6:
-			data['children'][1]['children'].append({'name':word,
-				'size':count,
-				'score':score,
-				'freq':freq,
-				'pscore':pscore})
+			data["children"][1]["children"].append({"name":word,
+				"size":count,
+				"score":score,
+				"freq":freq,
+				"pscore":pscore})
 		else:
-			data['children'][2]['children'].append({'name':word,
-				'size':count,
-				'score':score,
-				'freq':freq,
-				'pscore':pscore})
+			data["children"][2]["children"].append({"name":word,
+				"size":count,
+				"score":score,
+				"freq":freq,
+				"pscore":pscore})
 
-	with open('app/static/data/scores.json','w') as writefile:
+	with open("app/static/data/scores.json","w") as writefile:
 		json.dump(data,writefile)
 
 
