@@ -1,7 +1,7 @@
 # empath
 Sentiment analysis and recommender engine built on reddit mentions of 
 antidepressant usage.  Developed for the Insight Health Data Science program, 
-January 2016 session.
+January 2016 session.  Final product at [empath-engine.me](http://www.empath-engine.me).
 
 ## Structure
 * /data/:

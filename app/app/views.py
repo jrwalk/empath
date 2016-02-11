@@ -117,9 +117,9 @@ def parse_sentiment(nn_sent,nn_sent_all):
 	neg_percent_all = float(neg_count_all)/nn_sent_all[1]
 
 	pos_scale = np.abs(1. - pos_percent/pos_percent_all) * 100.
-	pos_scale = ("%.2f" % pos_scale)
+	pos_scale = ("%.1f" % pos_scale)
 	neg_scale = np.abs(1. - neg_percent/neg_percent_all) * 100.
-	neg_scale = ("%.2f" % neg_scale)
+	neg_scale = ("%.1f" % neg_scale)
 	if pos_percent > pos_percent_all:
 		pos_str = "more positive"
 	else:
